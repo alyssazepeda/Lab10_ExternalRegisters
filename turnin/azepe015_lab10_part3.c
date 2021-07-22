@@ -1,8 +1,8 @@
 /*	Author: Alyssa Zepeda
  *  Partner(s) Name: 
  *	Lab Section:
- *	Assignment: Lab #10  Exercise #2
- *	Exercise Description: https://youtu.be/SE1S3T4g2VM 
+ *	Assignment: Lab #10  Exercise #3
+ *	Exercise Description:  https://youtu.be/tupRsjrQ31Q
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
@@ -147,6 +147,8 @@ int D3_Tick(int state) {
 //Button Control
 unsigned char goR1;
 unsigned char goR2;
+unsigned char flag1;
+unsigned char flag2;
 #define A0 ~PINA&0x01
 #define A1 ~PINA&0x02
 #define A2 ~PINA&0x04
@@ -171,9 +173,13 @@ int B_Tick(int state) {
 			}
 			else if(A0 && A1) { //if both, R1 off
 				state = off1;
+				//to turn off, flag is lowered
+				//to turn on, flag is raised
+				flag1 = !flag1;
 			}
 			else if(A2 && A3) { //if both, R2 off
 				state = off2;
+				flag2 = !flag2;
 			}
 			else {state = check;}
 			break;	
@@ -183,8 +189,8 @@ int B_Tick(int state) {
 		case decR2: state = (A2 && A3) ? off2 : waitR; break;
 		case waitR: 
 			if(!(A0) && !(A1) && !(A2) && !(A3)) { state = check;}
-			else if(A0 && A1) {state = off1;}
-			else if(A2 && A3) {state = off2;}
+			else if(A0 && A1) {state = off1; flag1 = !flag1;}
+			else if(A2 && A3) {state = off2; flag2 = !flag2;}
 			else {state = waitR;}
 			break;
 		case off1:
@@ -199,7 +205,9 @@ int B_Tick(int state) {
 		default: state = start; break;
 	}
 	switch(state) {
-		case start: goR1 = 0x00; goR2 = 0x00; break;
+		case start: goR1 = 0x00; goR2 = 0x00; 
+			    flag1 = 0x00; flag2 = 0x00; 
+			    break;
 		case check: 
 		case waitR:
 			//R1
@@ -219,7 +227,6 @@ int B_Tick(int state) {
 			else if(goR1 == 0x03) {i = 0; goR1 = 0x01;}
 			break;
 		case decR1:
-			i = 0;
 			if(goR1 == 0x01) {goR1 = 0x03;}
                         else if(goR1 == 0x02) {i = 0; goR1 = 0x01;}
                         else if(goR1 == 0x03) {j = 0; goR1 = 0x02;}
@@ -235,9 +242,8 @@ int B_Tick(int state) {
                         else if(goR2 == 0x03) {j = 0; goR2 = 0x02;}
                         break;
 		case off1: 
-			//transmit_data(0, 1);
-			if(goR1 > 0) {goR1 = 0x00;}
-			else if (goR1 == 0x00) {goR1 = 0x01;}
+			if(goR1 > 0 && !flag1) {goR1 = 0x00;}
+			else if (goR1 == 0x00 && flag1) {goR1 = 0x01;}
 			//R2 still goes in this state
                         if(goR2 == 0x00) {transmit_data(0, 2);}
                         else if(goR2 == 0x01) {transmit_data(display1, 2);}
@@ -245,9 +251,8 @@ int B_Tick(int state) {
                         else if(goR2 == 0x03) {transmit_data(display3, 2);}
 		       	break;
 		case off2: 
-			//transmit_data(0, 2);
-			if(goR2 > 0) {goR2 = 0x00;}
-			else if (goR2 == 0x00) {goR2 = 0x01;}
+			if(goR2 > 0 && !flag2) {goR2 = 0x00;}
+			else if (goR2 == 0x00 && flag2) {goR2 = 0x01;}
 			//R1 still goes in this state
 			if(goR1 == 0x00) {transmit_data(0, 1);}
                         else if(goR1 == 0x01) {transmit_data(display1, 1);}
